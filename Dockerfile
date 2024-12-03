@@ -8,7 +8,6 @@ RUN apt-get update && apt-get install -y \
     jq \
     curl \
     sed \
-    aria2 \
     && rm -rf /var/lib/apt/lists/*
 
 # Set up a new user named "user" with user ID 1000
@@ -37,7 +36,7 @@ RUN chmod +x $HOME/alist/alist && \
 RUN echo '{\
     "force": false,\
     "address": "0.0.0.0",\
-    "port": 5244,\
+    "port": ENV_CUSTOM_PORT,\
     "scheme": {\
         "https": false,\
         "cert_file": "",\
@@ -64,6 +63,7 @@ sed -i "s/ENV_MYSQL_PORT/${MYSQL_PORT:-3306}/g" $HOME/alist/data/config.json\n\
 sed -i "s/ENV_MYSQL_USER/${MYSQL_USER:-root}/g" $HOME/alist/data/config.json\n\
 sed -i "s/ENV_MYSQL_PASSWORD/${MYSQL_PASSWORD:-password}/g" $HOME/alist/data/config.json\n\
 sed -i "s/ENV_MYSQL_DATABASE/${MYSQL_DATABASE:-alist}/g" $HOME/alist/data/config.json\n\
+sed -i "s/ENV_CUSTOM_PORT/${CUSTOM_PORT:-8080}/g" $HOME/alist/data/config.json\n\
 $HOME/alist/alist server --data $HOME/alist/data' > $HOME/alist/start.sh && \
     chmod +x $HOME/alist/start.sh
 
@@ -71,4 +71,4 @@ $HOME/alist/alist server --data $HOME/alist/data' > $HOME/alist/start.sh && \
 CMD ["/bin/bash", "-c", "/home/user/alist/start.sh"]
 
 # Expose the default Alist port
-EXPOSE 5244
+EXPOSE 8080
