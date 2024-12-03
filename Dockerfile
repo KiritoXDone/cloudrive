@@ -49,7 +49,7 @@ RUN chmod +x $HOME/alist/alist && \
 RUN echo '{\
     "force": false,\
     "address": "0.0.0.0",\
-    "port": 9527,\
+    "port": 5244,\
     "scheme": {\
         "https": false,\
         "cert_file": "",\
@@ -76,7 +76,6 @@ sed -i "s/ENV_MYSQL_PORT/${MYSQL_PORT:-3306}/g" $HOME/alist/data/config.json\n\
 sed -i "s/ENV_MYSQL_USER/${MYSQL_USER:-root}/g" $HOME/alist/data/config.json\n\
 sed -i "s/ENV_MYSQL_PASSWORD/${MYSQL_PASSWORD:-password}/g" $HOME/alist/data/config.json\n\
 sed -i "s/ENV_MYSQL_DATABASE/${MYSQL_DATABASE:-alist}/g" $HOME/alist/data/config.json\n\
-sed -i "s/\\"port\\": [0-9]\\+/\\"port\\": 9527/" $HOME/alist/data/config.json\n\
 aria2c --enable-rpc --rpc-listen-all --rpc-allow-origin-all --rpc-listen-port=6800 --daemon\n\
 qbittorrent-nox --webui-port=8080 &\n\
 $HOME/alist/alist server --data $HOME/alist/data' > $HOME/alist/start.sh && \ 
