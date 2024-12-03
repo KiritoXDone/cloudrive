@@ -71,4 +71,4 @@ $HOME/alist/alist server --data $HOME/alist/data' > $HOME/alist/start.sh && \
 CMD ["/bin/bash", "-c", "/home/user/alist/start.sh"]
 
 # Expose the default Alist port
-EXPOSE 8080
+EXPOSE 5244
