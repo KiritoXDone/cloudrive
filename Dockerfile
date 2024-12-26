@@ -1,74 +1,38 @@
-FROM ubuntu:22.04
+FROM alpine
 
-# Install necessary tools
-RUN apt-get update && apt-get install -y \
-    tar \
-    gzip \
-    file \
-    jq \
-    curl \
-    sed \
-    && rm -rf /var/lib/apt/lists/*
+WORKDIR /opt/app
 
-# Set up a new user named "user" with user ID 1000
-RUN useradd -m -u 1000 user
+RUN apk add --no-cache nodejs curl tzdata
 
-# Switch to the "user" user
-USER user
+ENV TIME_ZONE=Asia/Shanghai 
 
-# Set home to the user's home directory
-ENV HOME=/home/user \
-    PATH=/home/user/.local/bin:$PATH
+RUN cp /usr/share/zoneinfo/$TIME_ZONE /etc/localtime && echo $TIME_ZONE > /etc/timezone
 
-# Set the working directory to the user's home directory
-WORKDIR $HOME/alist
+# RUN apk del tzdata # BUG: https://github.com/gliderlabs/docker-alpine/issues/136#issuecomment-612751142
 
-# Download the latest alist release using jq for robustness
-RUN curl -sL https://api.github.com/repos/alist-org/alist/releases/latest | \
-    jq -r '.assets[] | select(.name | test("linux-amd64.tar.gz$")) | .browser_download_url' | \
-    xargs curl -L | tar -zxvf - -C $HOME/alist
+ADD https://github.com/sub-store-org/Sub-Store/releases/latest/download/sub-store.bundle.js /opt/app/sub-store.bundle.js
 
-# Set up the environment
-RUN chmod +x $HOME/alist/alist && \
-    mkdir -p $HOME/alist/data
+ADD https://github.com/sub-store-org/Sub-Store-Front-End/releases/latest/download/dist.zip /opt/app/dist.zip
 
-# Create data/config.json file with database configuration
-RUN echo '{\
-    "force": false,\
-    "address": "0.0.0.0",\
-    "port": ENV_CUSTOM_PORT,\
-    "scheme": {\
-        "https": false,\
-        "cert_file": "",\
-        "key_file": ""\
-    },\
-    "cache": {\
-        "expiration": 60,\
-        "cleanup_interval": 120\
-    },\
-    "database": {\
-        "type": "mysql",\
-        "host": "ENV_MYSQL_HOST",\
-        "port": ENV_MYSQL_PORT,\
-        "user": "ENV_MYSQL_USER",\
-        "password": "ENV_MYSQL_PASSWORD",\
-        "name": "ENV_MYSQL_DATABASE"\
-    }\
-}' > $HOME/alist/data/config.json
+RUN unzip dist.zip; mv dist frontend; rm dist.zip
 
-# Create a startup script that runs Alist and Aria2
-RUN echo '#!/bin/bash\n\
-sed -i "s/ENV_MYSQL_HOST/${MYSQL_HOST:-localhost}/g" $HOME/alist/data/config.json\n\
-sed -i "s/ENV_MYSQL_PORT/${MYSQL_PORT:-3306}/g" $HOME/alist/data/config.json\n\
-sed -i "s/ENV_MYSQL_USER/${MYSQL_USER:-root}/g" $HOME/alist/data/config.json\n\
-sed -i "s/ENV_MYSQL_PASSWORD/${MYSQL_PASSWORD:-password}/g" $HOME/alist/data/config.json\n\
-sed -i "s/ENV_MYSQL_DATABASE/${MYSQL_DATABASE:-alist}/g" $HOME/alist/data/config.json\n\
-sed -i "s/ENV_CUSTOM_PORT/${CUSTOM_PORT:-8080}/g" $HOME/alist/data/config.json\n\
-$HOME/alist/alist server --data $HOME/alist/data' > $HOME/alist/start.sh && \
-    chmod +x $HOME/alist/start.sh
+ADD https://github.com/xream/http-meta/releases/latest/download/http-meta.bundle.js /opt/app/http-meta.bundle.js
 
-# Set the command to run when the container starts
-CMD ["/bin/bash", "-c", "/home/user/alist/start.sh"]
+ADD https://github.com/xream/http-meta/releases/latest/download/tpl.yaml /opt/app/data/tpl.yaml
 
-# Expose the default Alist port
-EXPOSE 5244
+ADD https://github.com/P3TERX/GeoLite.mmdb/raw/download/GeoLite2-Country.mmdb /opt/app/data/GeoLite2-Country.mmdb
+
+ADD https://github.com/P3TERX/GeoLite.mmdb/raw/download/GeoLite2-ASN.mmdb /opt/app/data/GeoLite2-ASN.mmdb
+
+RUN version=$(curl -s -L --connect-timeout 5 --max-time 10 --retry 2 --retry-delay 0 --retry-max-time 20 'https://github.com/MetaCubeX/mihomo/releases/download/Prerelease-Alpha/version.txt') && \
+  arch=$(arch | sed s/aarch64/arm64/ | sed s/x86_64/amd64-compatible/) && \
+  url="https://github.com/MetaCubeX/mihomo/releases/download/Prerelease-Alpha/mihomo-linux-$arch-$version.gz" && \
+  curl -s -L --connect-timeout 5 --max-time 10 --retry 2 --retry-delay 0 --retry-max-time 20 "$url" -o /opt/app/data/http-meta.gz && \
+  gunzip /opt/app/data/http-meta.gz && \
+  rm -rf /opt/app/data/http-meta.gz
+
+RUN chmod 777 -R /opt/app
+
+CMD mkdir -p /opt/app/data; cd /opt/app/data; \
+  META_FOLDER=/opt/app/data HOST=:: PORT=9876 node /opt/app/http-meta.bundle.js > /opt/app/data/http-meta.log 2>&1 & echo "HTTP-META is running..."; \
+  SUB_STORE_BACKEND_API_HOST=:: SUB_STORE_FRONTEND_HOST=:: SUB_STORE_FRONTEND_PORT=7860 SUB_STORE_FRONTEND_PATH=/opt/app/frontend SUB_STORE_DATA_BASE_PATH=/opt/app/data SUB_STORE_MMDB_COUNTRY_PATH=/opt/app/data/GeoLite2-Country.mmdb SUB_STORE_MMDB_ASN_PATH=/opt/app/data/GeoLite2-ASN.mmdb node /opt/app/sub-store.bundle.js
