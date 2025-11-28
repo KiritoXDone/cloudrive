@@ -21,16 +21,16 @@ ENV HOME=/home/user \
     PATH=/home/user/.local/bin:$PATH
 
 # Set the working directory to the user's home directory
-WORKDIR $HOME/alist
+WORKDIR $HOME/Openlist
 
-# Download the latest alist release using jq for robustness
-RUN curl -sL https://api.github.com/repos/alist-org/alist/releases/latest | \
+# Download the latest Openlist release using jq for robustness
+RUN curl -sL https://api.github.com/repos/OpenlistTeam/Openlist/releases/latest | \
     jq -r '.assets[] | select(.name | test("linux-amd64.tar.gz$")) | .browser_download_url' | \
-    xargs curl -L | tar -zxvf - -C $HOME/alist
+    xargs curl -L | tar -zxvf - -C $HOME/Openlist
 
 # Set up the environment
-RUN chmod +x $HOME/alist/alist && \
-    mkdir -p $HOME/alist/data
+RUN chmod +x $HOME/Openlist/Openlist && \
+    mkdir -p $HOME/Openlist/data
 
 # Create data/config.json file with database configuration
 RUN echo '{\
@@ -54,21 +54,21 @@ RUN echo '{\
         "password": "ENV_MYSQL_PASSWORD",\
         "name": "ENV_MYSQL_DATABASE"\
     }\
-}' > $HOME/alist/data/config.json
+}' > $HOME/Openlist/data/config.json
 
-# Create a startup script that runs Alist and Aria2
+# Create a startup script that runs Openlist and Aria2
 RUN echo '#!/bin/bash\n\
-sed -i "s/ENV_MYSQL_HOST/${MYSQL_HOST:-localhost}/g" $HOME/alist/data/config.json\n\
-sed -i "s/ENV_MYSQL_PORT/${MYSQL_PORT:-3306}/g" $HOME/alist/data/config.json\n\
-sed -i "s/ENV_MYSQL_USER/${MYSQL_USER:-root}/g" $HOME/alist/data/config.json\n\
-sed -i "s/ENV_MYSQL_PASSWORD/${MYSQL_PASSWORD:-password}/g" $HOME/alist/data/config.json\n\
-sed -i "s/ENV_MYSQL_DATABASE/${MYSQL_DATABASE:-alist}/g" $HOME/alist/data/config.json\n\
-sed -i "s/ENV_CUSTOM_PORT/${CUSTOM_PORT:-8080}/g" $HOME/alist/data/config.json\n\
-$HOME/alist/alist server --data $HOME/alist/data' > $HOME/alist/start.sh && \
-    chmod +x $HOME/alist/start.sh
+sed -i "s/ENV_MYSQL_HOST/${MYSQL_HOST:-localhost}/g" $HOME/Openlist/data/config.json\n\
+sed -i "s/ENV_MYSQL_PORT/${MYSQL_PORT:-3306}/g" $HOME/Openlist/data/config.json\n\
+sed -i "s/ENV_MYSQL_USER/${MYSQL_USER:-root}/g" $HOME/Openlist/data/config.json\n\
+sed -i "s/ENV_MYSQL_PASSWORD/${MYSQL_PASSWORD:-password}/g" $HOME/Openlist/data/config.json\n\
+sed -i "s/ENV_MYSQL_DATABASE/${MYSQL_DATABASE:-Openlist}/g" $HOME/Openlist/data/config.json\n\
+sed -i "s/ENV_CUSTOM_PORT/${CUSTOM_PORT:-8080}/g" $HOME/Openlist/data/config.json\n\
+$HOME/Openlist/Openlist server --data $HOME/Openlist/data' > $HOME/Openlist/start.sh && \
+    chmod +x $HOME/Openlist/start.sh
 
 # Set the command to run when the container starts
-CMD ["/bin/bash", "-c", "/home/user/alist/start.sh"]
+CMD ["/bin/bash", "-c", "/home/user/Openlist/start.sh"]
 
-# Expose the default Alist port
+# Expose the default Openlist port
 EXPOSE 5244
