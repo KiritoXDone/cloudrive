@@ -65,6 +65,7 @@ sed -i "s/ENV_MYSQL_USER/${MYSQL_USER:-root}/g" $HOME/openlist/data/config.json\
 sed -i "s/ENV_MYSQL_PASSWORD/${MYSQL_PASSWORD:-password}/g" $HOME/openlist/data/config.json\n\
 sed -i "s/ENV_MYSQL_DATABASE/${MYSQL_DATABASE:-openlist}/g" $HOME/openlist/data/config.json\n\
 sed -i "s/ENV_CUSTOM_PORT/${CUSTOM_PORT:-8080}/g" $HOME/openlist/data/config.json\n\
+aria2c --enable-rpc --rpc-listen-all --rpc-allow-origin-all --rpc-listen-port=6800 --daemon\n\
 $HOME/openlist/openlist server --data $HOME/openlist/data' > $HOME/openlist/start.sh && \
     chmod +x $HOME/openlist/start.sh
 
