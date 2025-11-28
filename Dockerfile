@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     jq \
     curl \
     sed \
+    aria2 \
     && rm -rf /var/lib/apt/lists/*
 
 # Set up a new user named "user" with user ID 1000
